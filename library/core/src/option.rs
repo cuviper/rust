@@ -148,10 +148,11 @@
 #![stable(feature = "rust1", since = "1.0.0")]
 
 use crate::iter::{FromIterator, FusedIterator, TrustedLen};
+use crate::iter::{try_get_unchecked, TrustedRandomAccess};
 use crate::pin::Pin;
 use crate::{
-    convert, fmt, hint, mem,
-    ops::{self, Deref, DerefMut},
+    convert, fmt, hint, intrinsics, mem,
+    ops::{self, Deref, DerefMut, Try},
 };
 
 /// The `Option` type. See [the module level documentation](self) for more.
@@ -1716,5 +1717,212 @@ impl<T> Option<Option<T>> {
     #[stable(feature = "option_flattening", since = "1.40.0")]
     pub fn flatten(self) -> Option<T> {
         self.and_then(convert::identity)
+    }
+}
+
+impl<T: IntoIterator> Option<T> {
+    /// Converts from `Option<T>` to a flattened iterator, where either
+    /// `Some(x)` iterates from `x.into_iter()`, or else `None` is empty.
+    ///
+    /// This is conceptually similar to `option.into_iter().flatten()`, but is
+    /// optimized for the fact that `option.into_iter()` only produces a single
+    /// item itself. The iterator type is smaller, and it also reports a more
+    /// accurate size than `Flatten`, even implementing `ExactSizeIterator` if
+    /// the underlying iterator supports it.
+    #[inline]
+    #[unstable(feature = "option_flatten_iter", issue = "none")]
+    pub fn flatten_iter(self) -> Flatten<T::IntoIter> {
+        Flatten { iter: self.map(T::into_iter) }
+    }
+}
+
+/// An iterator that flattens an `Option`, either iterating items from a `Some`
+/// value or nothing from `None`.
+///
+/// This `struct` is created by the [`Option::flatten_iter`] function.
+#[derive(Clone, Debug)]
+#[unstable(feature = "option_flatten_iter", issue = "none")]
+pub struct Flatten<I> {
+    iter: Option<I>,
+}
+
+#[unstable(feature = "option_flatten_iter", issue = "none")]
+impl<I: Iterator> Iterator for Flatten<I> {
+    type Item = I::Item;
+
+    #[inline]
+    fn next(&mut self) -> Option<I::Item> {
+        match self.iter {
+            Some(ref mut iter) => iter.next(),
+            None => None,
+        }
+    }
+
+    #[inline]
+    fn nth(&mut self, n: usize) -> Option<I::Item> {
+        match self.iter {
+            Some(ref mut iter) => iter.nth(n),
+            None => None,
+        }
+    }
+
+    #[inline]
+    fn last(self) -> Option<I::Item> {
+        match self.iter {
+            Some(iter) => iter.last(),
+            None => None,
+        }
+    }
+
+    #[inline]
+    fn count(self) -> usize {
+        match self.iter {
+            Some(iter) => iter.count(),
+            None => 0,
+        }
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self.iter {
+            Some(ref iter) => iter.size_hint(),
+            None => (0, Some(0)),
+        }
+    }
+
+    #[inline]
+    fn try_fold<Acc, Fold, R>(&mut self, acc: Acc, fold: Fold) -> R
+    where
+        Self: Sized,
+        Fold: FnMut(Acc, I::Item) -> R,
+        R: Try<Ok = Acc>,
+    {
+        match self.iter {
+            Some(ref mut iter) => iter.try_fold(acc, fold),
+            None => try { acc },
+        }
+    }
+
+    #[inline]
+    fn fold<Acc, Fold>(self, acc: Acc, fold: Fold) -> Acc
+    where
+        Fold: FnMut(Acc, I::Item) -> Acc,
+    {
+        match self.iter {
+            Some(iter) => iter.fold(acc, fold),
+            None => acc,
+        }
+    }
+
+    #[inline]
+    fn find<P>(&mut self, predicate: P) -> Option<I::Item>
+    where
+        P: FnMut(&I::Item) -> bool,
+    {
+        match self.iter {
+            Some(ref mut iter) => iter.find(predicate),
+            None => None,
+        }
+    }
+
+    #[inline]
+    unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> Self::Item
+    where
+        Self: TrustedRandomAccess,
+    {
+        match self.iter {
+            // SAFETY: the caller must uphold the contract for
+            // `Iterator::__iterator_get_unchecked`.
+            Some(ref mut iter) => unsafe { try_get_unchecked(iter, idx) },
+            // SAFETY: the caller asserts there is an item at `i`, so we're not empty.
+            None => unsafe { intrinsics::unreachable() },
+        }
+    }
+}
+
+#[unstable(feature = "option_flatten_iter", issue = "none")]
+impl<I: DoubleEndedIterator> DoubleEndedIterator for Flatten<I> {
+    #[inline]
+    fn next_back(&mut self) -> Option<I::Item> {
+        match self.iter {
+            Some(ref mut iter) => iter.next_back(),
+            None => None,
+        }
+    }
+
+    #[inline]
+    fn nth_back(&mut self, n: usize) -> Option<I::Item> {
+        match self.iter {
+            Some(ref mut iter) => iter.nth_back(n),
+            None => None,
+        }
+    }
+
+    #[inline]
+    fn try_rfold<Acc, Fold, R>(&mut self, acc: Acc, fold: Fold) -> R
+    where
+        Self: Sized,
+        Fold: FnMut(Acc, I::Item) -> R,
+        R: Try<Ok = Acc>,
+    {
+        match self.iter {
+            Some(ref mut iter) => iter.try_rfold(acc, fold),
+            None => try { acc },
+        }
+    }
+
+    #[inline]
+    fn rfold<Acc, Fold>(self, acc: Acc, fold: Fold) -> Acc
+    where
+        Fold: FnMut(Acc, I::Item) -> Acc,
+    {
+        match self.iter {
+            Some(iter) => iter.rfold(acc, fold),
+            None => acc,
+        }
+    }
+
+    #[inline]
+    fn rfind<P>(&mut self, predicate: P) -> Option<I::Item>
+    where
+        P: FnMut(&I::Item) -> bool,
+    {
+        match self.iter {
+            Some(ref mut iter) => iter.rfind(predicate),
+            None => None,
+        }
+    }
+}
+
+#[unstable(feature = "option_flatten_iter", issue = "none")]
+impl<I: ExactSizeIterator> ExactSizeIterator for Flatten<I> {
+    #[inline]
+    fn len(&self) -> usize {
+        match self.iter {
+            Some(ref iter) => iter.len(),
+            None => 0,
+        }
+    }
+
+    #[inline]
+    fn is_empty(&self) -> bool {
+        match self.iter {
+            Some(ref iter) => iter.is_empty(),
+            None => true,
+        }
+    }
+}
+
+#[unstable(feature = "option_flatten_iter", issue = "none")]
+impl<I: FusedIterator> FusedIterator for Flatten<I> {}
+
+#[unstable(feature = "trusted_len", issue = "37572")]
+unsafe impl<I: TrustedLen> TrustedLen for Flatten<I> {}
+
+#[doc(hidden)]
+#[unstable(feature = "trusted_random_access", issue = "none")]
+unsafe impl<I: TrustedRandomAccess> TrustedRandomAccess for Flatten<I> {
+    fn may_have_side_effect() -> bool {
+        I::may_have_side_effect()
     }
 }

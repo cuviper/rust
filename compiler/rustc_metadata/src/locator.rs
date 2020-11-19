@@ -312,9 +312,8 @@ impl<'a> CrateLocator<'a> {
                 sess.opts
                     .externs
                     .get(&crate_name.as_str())
-                    .into_iter()
-                    .filter_map(|entry| entry.files())
-                    .flatten()
+                    .and_then(|entry| entry.files())
+                    .flatten_iter()
                     .map(PathBuf::from)
                     .collect()
             } else {

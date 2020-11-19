@@ -17,7 +17,7 @@ pub use self::chain::Chain;
 #[stable(feature = "rust1", since = "1.0.0")]
 pub use self::flatten::{FlatMap, Flatten};
 pub use self::fuse::Fuse;
-use self::zip::try_get_unchecked;
+pub(crate) use self::zip::try_get_unchecked;
 #[unstable(feature = "trusted_random_access", issue = "none")]
 pub use self::zip::TrustedRandomAccess;
 pub use self::zip::Zip;

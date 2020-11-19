@@ -157,8 +157,8 @@ fn do_mir_borrowck<'a, 'tcx>(
     let upvars: Vec<_> = tables
         .closure_captures
         .get(&def.did.to_def_id())
-        .into_iter()
-        .flat_map(|v| v.values())
+        .map(|v| v.values())
+        .flatten_iter()
         .map(|upvar_id| {
             let var_hir_id = upvar_id.var_path.hir_id;
             let capture = tables.upvar_capture(*upvar_id);

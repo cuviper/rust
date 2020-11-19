@@ -52,6 +52,7 @@
 #![feature(exclusive_range_pattern)]
 #![feature(control_flow_enum)]
 #![feature(associated_type_defaults)]
+#![feature(option_flatten_iter)]
 #![recursion_limit = "512"]
 
 #[macro_use]

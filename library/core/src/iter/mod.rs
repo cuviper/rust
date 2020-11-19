@@ -367,7 +367,7 @@ pub use self::adapters::{FlatMap, Peekable, Scan, Skip, SkipWhile, Take, TakeWhi
 #[stable(feature = "rust1", since = "1.0.0")]
 pub use self::adapters::{Fuse, Inspect};
 
-pub(crate) use self::adapters::process_results;
+pub(crate) use self::adapters::{process_results, try_get_unchecked};
 
 mod adapters;
 mod range;

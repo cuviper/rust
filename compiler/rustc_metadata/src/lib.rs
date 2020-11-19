@@ -12,6 +12,7 @@
 #![feature(stmt_expr_attributes)]
 #![feature(try_blocks)]
 #![feature(never_type)]
+#![feature(option_flatten_iter)]
 #![recursion_limit = "256"]
 
 extern crate proc_macro;

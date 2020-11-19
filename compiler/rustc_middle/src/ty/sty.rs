@@ -399,8 +399,7 @@ impl<'tcx> ClosureSubsts<'tcx> {
             TyKind::Infer(_) => bug!("upvar_tys called before capture types are inferred"),
             ty => bug!("Unexpected representation of upvar types tuple {:?}", ty),
         }
-        .into_iter()
-        .flatten()
+        .flatten_iter()
     }
 
     /// Returns the tuple type representing the upvars for this closure.
@@ -536,8 +535,7 @@ impl<'tcx> GeneratorSubsts<'tcx> {
             TyKind::Infer(_) => bug!("upvar_tys called before capture types are inferred"),
             ty => bug!("Unexpected representation of upvar types tuple {:?}", ty),
         }
-        .into_iter()
-        .flatten()
+        .flatten_iter()
     }
 
     /// Returns the tuple type representing the upvars for this generator.
@@ -696,8 +694,7 @@ impl<'tcx> UpvarSubsts<'tcx> {
             TyKind::Infer(_) => bug!("upvar_tys called before capture types are inferred"),
             ty => bug!("Unexpected representation of upvar types tuple {:?}", ty),
         }
-        .into_iter()
-        .flatten()
+        .flatten_iter()
     }
 
     #[inline]

@@ -3,7 +3,7 @@
 use crate::char;
 use crate::fmt::{self, Write};
 use crate::iter::TrustedRandomAccess;
-use crate::iter::{Chain, FlatMap, Flatten};
+use crate::iter::{Chain, FlatMap};
 use crate::iter::{Copied, Filter, FusedIterator, Map, TrustedLen};
 use crate::ops::Try;
 use crate::option;
@@ -1359,7 +1359,7 @@ impl FusedIterator for EncodeUtf16<'_> {}
 #[derive(Clone, Debug)]
 pub struct EscapeDebug<'a> {
     pub(super) inner: Chain<
-        Flatten<option::IntoIter<char::EscapeDebug>>,
+        option::Flatten<char::EscapeDebug>,
         FlatMap<Chars<'a>, char::EscapeDebug, CharEscapeDebugContinue>,
     >,
 }

@@ -1004,7 +1004,7 @@ impl<R: Idx, C: Idx> SparseBitMatrix<R, C> {
     /// Iterates through all the columns set to true in a given row of
     /// the matrix.
     pub fn iter<'a>(&'a self, row: R) -> impl Iterator<Item = C> + 'a {
-        self.row(row).into_iter().flat_map(|r| r.iter())
+        self.row(row).map(HybridBitSet::iter).flatten_iter()
     }
 
     pub fn row(&self, row: R) -> Option<&HybridBitSet<C>> {

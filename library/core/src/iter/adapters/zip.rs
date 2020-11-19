@@ -435,7 +435,7 @@ pub unsafe trait TrustedRandomAccess: Sized {
 ///
 /// Same requirements calling `get_unchecked` directly.
 #[doc(hidden)]
-pub(in crate::iter::adapters) unsafe fn try_get_unchecked<I>(it: &mut I, idx: usize) -> I::Item
+pub(crate) unsafe fn try_get_unchecked<I>(it: &mut I, idx: usize) -> I::Item
 where
     I: Iterator,
 {

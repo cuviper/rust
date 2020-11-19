@@ -190,13 +190,8 @@ impl<'a, 'tcx> Borrows<'a, 'tcx> {
     fn kill_borrows_on_place(&self, trans: &mut impl GenKill<BorrowIndex>, place: Place<'tcx>) {
         debug!("kill_borrows_on_place: place={:?}", place);
 
-        let other_borrows_of_local = self
-            .borrow_set
-            .local_map
-            .get(&place.local)
-            .into_iter()
-            .flat_map(|bs| bs.iter())
-            .copied();
+        let other_borrows_of_local =
+            self.borrow_set.local_map.get(&place.local).map(|bs| bs.iter()).flatten_iter().copied();
 
         // If the borrowed place is a local with no projections, all other borrows of this
         // local must conflict. This is purely an optimization so we don't have to call

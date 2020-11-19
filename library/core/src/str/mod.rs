@@ -2342,8 +2342,7 @@ impl str {
             inner: chars
                 .next()
                 .map(|first| first.escape_debug_ext(true))
-                .into_iter()
-                .flatten()
+                .flatten_iter()
                 .chain(chars.flat_map(CharEscapeDebugContinue)),
         }
     }

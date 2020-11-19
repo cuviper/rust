@@ -787,10 +787,9 @@ impl<'a, 'tcx> Clean<Generics> for (&'a ty::Generics, ty::GenericPredicates<'tcx
 
                         b.extend(
                             p.get_bounds()
-                                .into_iter()
-                                .flatten()
-                                .cloned()
-                                .filter(|b| !b.is_sized_bound(cx)),
+                                .flatten_iter()
+                                .filter(|&b| !b.is_sized_bound(cx))
+                                .cloned(),
                         );
 
                         let proj = projection

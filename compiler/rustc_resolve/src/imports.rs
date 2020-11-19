@@ -1095,7 +1095,7 @@ impl<'a, 'b> ImportResolver<'a, 'b> {
                     }
                     _ => None,
                 };
-                let resolutions = resolutions.as_ref().into_iter().flat_map(|r| r.iter());
+                let resolutions = resolutions.as_ref().map(|r| r.iter()).flatten_iter();
                 let names = resolutions.filter_map(|(BindingKey { ident: i, .. }, resolution)| {
                     if *i == ident {
                         return None;

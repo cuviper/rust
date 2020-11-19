@@ -560,9 +560,7 @@ fn link_natively<'a, B: ArchiveBuilder<'a>>(
             let get_objects = |objects: &CrtObjects, kind| {
                 objects
                     .get(&kind)
-                    .iter()
-                    .copied()
-                    .flatten()
+                    .flatten_iter()
                     .map(|obj| get_object_file_path(sess, obj, self_contained).into_os_string())
                     .collect::<Vec<_>>()
             };
@@ -1255,7 +1253,7 @@ fn add_pre_link_objects(
     let opts = &sess.target;
     let objects =
         if self_contained { &opts.pre_link_objects_fallback } else { &opts.pre_link_objects };
-    for obj in objects.get(&link_output_kind).iter().copied().flatten() {
+    for obj in objects.get(&link_output_kind).flatten_iter() {
         cmd.add_object(&get_object_file_path(sess, obj, self_contained));
     }
 }
@@ -1270,7 +1268,7 @@ fn add_post_link_objects(
     let opts = &sess.target;
     let objects =
         if self_contained { &opts.post_link_objects_fallback } else { &opts.post_link_objects };
-    for obj in objects.get(&link_output_kind).iter().copied().flatten() {
+    for obj in objects.get(&link_output_kind).flatten_iter() {
         cmd.add_object(&get_object_file_path(sess, obj, self_contained));
     }
 }

@@ -602,8 +602,7 @@ impl<'a> Resolver<'a> {
                         suggestions.extend(
                             this.helper_attrs
                                 .get(&expn_id)
-                                .into_iter()
-                                .flatten()
+                                .flatten_iter()
                                 .map(|ident| TypoSuggestion::from_res(ident.name, res)),
                         );
                     }
