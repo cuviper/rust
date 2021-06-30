@@ -49,7 +49,10 @@ macro_rules! unchecked {
         match $self {
             Fuse { iter: Some(iter) } => iter,
             // SAFETY: the specialized iterator never sets `None`
-            Fuse { iter: None } => unsafe { intrinsics::unreachable() },
+            // However, variance may mean we're not consistently using the specialized
+            // implementation if it only applies to a subtype. (rust-lang/rust#85863)
+            // Fuse { iter: None } => unsafe { intrinsics::unreachable() },
+            Fuse { iter: None } => unreachable!(),
         }
     };
 }
@@ -540,7 +543,10 @@ where
             // SAFETY: unsafe function forwarding to unsafe function with the same requirements
             Some(ref mut iter) => unsafe { SourceIter::as_inner(iter) },
             // SAFETY: the specialized iterator never sets `None`
-            None => unsafe { intrinsics::unreachable() },
+            // However, variance may mean we're not consistently using the specialized
+            // implementation if it only applies to a subtype. (rust-lang/rust#85863)
+            // None => unsafe { intrinsics::unreachable() },
+            None => unreachable!(),
         }
     }
 }
