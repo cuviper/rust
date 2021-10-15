@@ -1269,6 +1269,11 @@ impl<'a> Parser<'a> {
             return Ok(self.mk_await_expr(self_arg, lo));
         }
 
+        if self.eat_keyword(kw::Match) {
+            let match_span = self.prev_token.span;
+            return self.parse_match_block(AttrVec::new(), lo, match_span, self_arg);
+        }
+
         let fn_span_lo = self.token.span;
         let mut segment = self.parse_path_segment(PathStyle::Expr, None)?;
         self.check_trailing_angle_brackets(&segment, &[&token::OpenDelim(Delimiter::Parenthesis)]);
@@ -2542,10 +2547,21 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a `match ... { ... }` expression (`match` token already eaten).
-    fn parse_match_expr(&mut self, mut attrs: AttrVec) -> PResult<'a, P<Expr>> {
+    fn parse_match_expr(&mut self, attrs: AttrVec) -> PResult<'a, P<Expr>> {
         let match_span = self.prev_token.span;
-        let lo = self.prev_token.span;
         let scrutinee = self.parse_expr_res(Restrictions::NO_STRUCT_LITERAL, None)?;
+        self.parse_match_block(attrs, match_span, match_span, scrutinee)
+    }
+
+    /// Parses a `match expr { ... }` or `expr.match { ... }` expression,
+    /// having already eaten the `match` token and scrutinee.
+    fn parse_match_block(
+        &mut self,
+        mut attrs: AttrVec,
+        lo: Span,
+        match_span: Span,
+        scrutinee: P<Expr>,
+    ) -> PResult<'a, P<Expr>> {
         if let Err(mut e) = self.expect(&token::OpenDelim(Delimiter::Brace)) {
             if self.token == token::Semi {
                 e.span_suggestion_short(
